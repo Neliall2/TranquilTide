@@ -1,0 +1,16 @@
+{
+    "name": "MindSpace Meditation",
+    "short_name": "MindSpace",
+    "description": "Приложение для медитации с использованием AI",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#0ea5e9",
+    "icons": [
+        {
+            "src": "icon.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        }
+    ]
+} 

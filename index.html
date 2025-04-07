@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="ru" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MindSpace - Медитация</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        },
+                        secondary: {
+                            50: '#f5f3ff',
+                            100: '#ede9fe',
+                            200: '#ddd6fe',
+                            300: '#c4b5fd',
+                            400: '#a78bfa',
+                            500: '#8b5cf6',
+                            600: '#7c3aed',
+                            700: '#6d28d9',
+                            800: '#5b21b6',
+                            900: '#4c1d95',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .animate-pulse-slow {
+            animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+        .progress-ring-circle {
+            transition: stroke-dashoffset 0.35s;
+            transform-origin: 50% 50%;
+        }
+        .meditation-card {
+            transition: all 0.3s ease;
+        }
+        .meditation-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .theme-toggle {
+            transition: all 0.3s ease;
+        }
+        .language-toggle {
+            transition: all 0.3s ease;
+        }
+        .tab-active {
+            position: relative;
+        }
+        .tab-active:after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background-color: currentColor;
+        }
+    </style>
+</head>
+<body class="h-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-200">
+    <div id="app" class="min-h-full flex flex-col">
+        <script>
+            let tg = window.Telegram.WebApp;
+            tg.expand();
+            
+            // Инициализация при загрузке
+            document.addEventListener('DOMContentLoaded', function() {
+                // Получаем данные пользователя из Telegram
+                const user = tg.initDataUnsafe.user;
+                if (user) {
+                    document.getElementById('username').textContent = user.first_name;
+                    document.getElementById('profile-username').textContent = user.first_name;
+                }
+                
+                // Настройка темы
+                if (tg.colorScheme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                }
+            });
+        </script>
+        <!-- Главный экран -->
+        <div id="main-screen" class="flex-1 p-4 max-w-md mx-auto w-full">
+            <!-- Шапка -->
+            <header class="flex justify-between items-center mb-8">
+                <h1 class="text-2xl font-bold text-primary-600 dark:text-primary-400">MindSpace</h1>
+                <button id="profile-btn" class="relative w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center">
+                    <i class="fas fa-user text-primary-600 dark:text-primary-400"></i>
+                    <span class="absolute -bottom-1 -right-1 bg-secondary-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">3</span>
+                </button>
+            </header>
+
+            <!-- Приветствие -->
+            <div class="mb-8">
+                <h2 class="text-xl font-semibold mb-1">Доброе утро, <span id="username">Алексей</span>!</h2>
+                <p class="text-gray-600 dark:text-gray-400">Какой практикой займёмся сегодня?</p>
+            </div>
+
+            <!-- Прогресс уровня -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm mb-8">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-sm font-medium">Уровень 3</span>
+                    <span class="text-sm font-medium">120/200 XP</span>
+                </div>
+                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                    <div class="bg-primary-500 h-2.5 rounded-full" style="width: 60%"></div>
+                </div>
+            </div>
+
+            <!-- Медитации -->
+            <div class="grid grid-cols-2 gap-4 mb-8">
+                <div class="meditation-card bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm flex flex-col items-center text-center cursor-pointer" data-meditation="breathing">
+                    <div class="w-16 h-16 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center mb-3">
+                        <i class="fas fa-wind text-primary-600 dark:text-primary-400 text-2xl"></i>
+                    </div>
+                    <h3 class="font-medium mb-1">Дыхание</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">5 мин</p>
+                </div>
+                <div class="meditation-card bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm flex flex-col items-center text-center cursor-pointer" data-meditation="body-scan">
+                    <div class="w-16 h-16 rounded-full bg-secondary-100 dark:bg-secondary-900 flex items-center justify-center mb-3">
+                        <i class="fas fa-spa text-secondary-600 dark:text-secondary-400 text-2xl"></i>
+                    </div>
+                    <h3 class="font-medium mb-1">Сканирование</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">10 мин</p>
+                </div>
+                <div class="meditation-card bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm flex flex-col items-center text-center cursor-pointer" data-meditation="gratitude">
+                    <div class="w-16 h-16 rounded-full bg-yellow-100 dark:bg-yellow-900 flex items-center justify-center mb-3">
+                        <i class="fas fa-heart text-yellow-600 dark:bg-yellow-400 text-2xl"></i>
+                    </div>
+                    <h3 class="font-medium mb-1">Благодарность</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">7 мин</p>
+                </div>
+                <div class="meditation-card bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm flex flex-col items-center text-center cursor-pointer" data-meditation="sleep">
+                    <div class="w-16 h-16 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center mb-3">
+                        <i class="fas fa-moon text-indigo-600 dark:bg-indigo-400 text-2xl"></i>
+                    </div>
+                    <h3 class="font-medium mb-1">Сон</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">15 мин</p>
+                </div>
+            </div>
+
+            <!-- Статистика -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
+                <h3 class="font-medium mb-3">Ваша активность</h3>
+                <div class="grid grid-cols-3 gap-2 text-center">
+                    <div>
+                        <div class="text-2xl font-bold text-primary-600 dark:text-primary-400">12</div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">сессий</div>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-bold text-secondary-600 dark:text-secondary-400">3</div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">дня подряд</div>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-bold text-yellow-600 dark:text-yellow-400">2</div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">медали</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Экран профиля -->
+        <div id="profile-screen" class="hidden flex-1 p-4 max-w-md mx-auto w-full">
+            <!-- Шапка -->
+            <header class="flex justify-between items-center mb-6">
+                <button id="back-btn" class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <h1 class="text-xl font-bold">Профиль</h1>
+                <div class="w-10"></div> <!-- Для выравнивания -->
+            </header>
+
+            <!-- Аватар и информация -->
+            <div class="flex flex-col items-center mb-8">
+                <div class="relative mb-4">
+                    <div class="w-24 h-24 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center mb-2">
+                        <i class="fas fa-user text-primary-600 dark:text-primary-400 text-4xl"></i>
+                    </div>
+                    <div class="absolute -bottom-1 -right-1 bg-secondary-500 text-white text-xs font-bold rounded-full w-8 h-8 flex items-center justify-center border-2 border-white dark:border-gray-800">
+                        3
+                    </div>
+                </div>
+                <h2 class="text-xl font-semibold" id="profile-username">Алексей</h2>
+                <p class="text-gray-500 dark:text-gray-400 text-sm">Созерцатель</p>
+            </div>
+
+            <!-- Прогресс -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm mb-6">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-sm font-medium">Прогресс уровня</span>
+                    <span class="text-sm font-medium">120/200 XP</span>
+                </div>
+                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 mb-3">
+                    <div class="bg-primary-500 h-2.5 rounded-full" style="width: 60%"></div>
+                </div>
+                <div class="grid grid-cols-3 gap-2 text-center">
+                    <div>
+                        <div class="font-bold">12</div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">сессий</div>
+                    </div>
+                    <div>
+                        <div class="font-bold">3</div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">дня подряд</div>
+                    </div>
+                    <div>
+                        <div class="font-bold">2</div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">медали</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Медали -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm mb-6">
+                <h3 class="font-medium mb-3">Ваши медали</h3>
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="flex flex-col items-center">
+                        <div class="w-12 h-12 rounded-full bg-yellow-100 dark:bg-yellow-900 flex items-center justify-center mb-1">
+                            <i class="fas fa-medal text-yellow-500 text-xl"></i>
+                        </div>
+                        <span class="text-xs text-center">Новичок</span>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <div class="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mb-1">
+                            <i class="fas fa-medal text-gray-400 text-xl"></i>
+                        </div>
+                        <span class="text-xs text-center">7 дней</span>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <div class="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mb-1">
+                            <i class="fas fa-medal text-gray-400 text-xl"></i>
+                        </div>
+                        <span class="text-xs text-center">30 дней</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Настройки -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
+                <h3 class="font-medium mb-3">Настройки</h3>
+                
+                <div class="flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-700">
+                    <div class="flex items-center">
+                        <i class="fas fa-moon mr-3 text-primary-600 dark:text-primary-400"></i>
+                        <span>Тёмная тема</span>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="theme-toggle" class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
+                    </label>
+                </div>
+                
+                <div class="flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-700">
+                    <div class="flex items-center">
+                        <i class="fas fa-globe mr-3 text-primary-600 dark:text-primary-400"></i>
+                        <span>Язык</span>
+                    </div>
+                    <div class="flex items-center">
+                        <button id="lang-ru" class="language-toggle px-2 py-1 rounded-l-md bg-primary-600 text-white text-sm">RU</button>
+                        <button id="lang-en" class="language-toggle px-2 py-1 rounded-r-md bg-gray-200 dark:bg-gray-700 text-sm">EN</button>
+                    </div>
+                </div>
+                
+                <div class="flex items-center justify-between py-3">
+                    <div class="flex items-center">
+                        <i class="fas fa-bell mr-3 text-primary-600 dark:text-primary-400"></i>
+                        <span>Напоминания</span>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" class="sr-only peer" checked>
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Экран медитации -->
+        <div id="meditation-screen" class="hidden flex-1 p-4 max-w-md mx-auto w-full">
+            <!-- Шапка -->
+            <header class="flex justify-between items-center mb-6">
+                <button id="meditation-back-btn" class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <h1 class="text-xl font-bold" id="meditation-title">Медитация</h1>
+                <div class="w-10"></div> <!-- Для выравнивания -->
+            </header>
+
+            <!-- Контент медитации -->
+            <div class="flex flex-col items-center">
+                <div class="w-40 h-40 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center mb-8">
+                    <i id="meditation-icon" class="fas fa-wind text-primary-600 dark:text-primary-400 text-5xl"></i>
+                </div>
+                
+                <h2 class="text-xl font-semibold mb-2" id="practice-title">Осознанное дыхание</h2>
+                <p class="text-gray-500 dark:text-gray-400 mb-6" id="practice-duration">5 минут</p>
+                
+                <p class="text-center mb-8 text-gray-700 dark:text-gray-300" id="practice-description">
+                    Сосредоточьтесь на естественном ритме дыхания. Вдыхайте и выдыхайте, наблюдая за ощущениями в теле.
+                </p>
+                
+                <div class="relative mb-8">
+                    <svg class="progress-ring w-48 h-48" viewBox="0 0 48 48">
+                        <circle class="text-gray-200 dark:text-gray-700" stroke-width="4" stroke="currentColor" fill="transparent" r="20" cx="24" cy="24"/>
+                        <circle id="progress-circle" class="progress-ring-circle text-primary-500" stroke-width="4" stroke-dasharray="125.6" stroke-dashoffset="0" stroke-linecap="round" stroke="currentColor" fill="transparent" r="20" cx="24" cy="24"/>
+                    </svg>
+                    <div class="absolute inset-0 flex items-center justify-center flex-col">
+                        <div id="timer" class="text-3xl font-bold">5:00</div>
+                        <div id="timer-state" class="text-sm text-gray-500 dark:text-gray-400">Готово</div>
+                    </div>
+                </div>
+                
+                <button id="start-btn" class="w-full py-4 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-xl shadow-sm transition-colors duration-200">
+                    Начать
+                </button>
+            </div>
+        </div>
+
+        <!-- Экран истории -->
+        <div id="history-screen" class="hidden flex-1 p-4 max-w-md mx-auto w-full">
+            <!-- Шапка -->
+            <header class="flex justify-between items-center mb-6">
+                <button id="history-back-btn" class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <h1 class="text-xl font-bold">История</h1>
+                <div class="w-10"></div> <!-- Для выравнивания -->
+            </header>
+
+            <!-- Табы -->
+            <div class="flex border-b border-gray-200 dark:border-gray-700 mb-6">
+                <button class="tab-active pb-2 px-4 font-medium text-primary-600 dark:text-primary-400">Календарь</button>
+                <button class="pb-2 px-4 font-medium text-gray-500 dark:text-gray-400">Статистика</button>
+            </div>
+
+            <!-- Календарь -->
+            <div class="mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <button class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <h3 class="font-medium">Июнь 2023</h3>
+                    <button class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-7 gap-1 text-center mb-2">
+                    <div class="text-xs text-gray-500 dark:text-gray-400">Пн</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400">Вт</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400">Ср</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400">Чт</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400">Пт</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400">Сб</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400">Вс</div>
+                </div>
+                
+                <div class="grid grid-cols-7 gap-1 text-center">
+                    <div class="h-10"></div> <!-- Пустые дни -->
+                    <div class="h-10"></div>
+                    <div class="h-10"></div>
+                    <div class="h-10 flex items-center justify-center">
+                        <span class="text-gray-400">1</span>
+                    </div>
+                    <div class="h-10 flex items-center justify-center">
+                        <span class="text-gray-400">2</span>
+                    </div>
+                    <div class="h-10 flex items-center justify-center">
+                        <span class="text-gray-400">3</span>
+                    </div>
+                    <div class="h-10 flex items-center justify-center">
+                        <span class="text-gray-400">4</span>
+                    </div>
+                    <!-- Неделя 2 -->
+                    <div class="h-10 flex items-center justify-center">
+                        <span class="text-gray-400">5</span>
+                    </div>
+                    <div class="h-10 flex items-center justify-center">
+                        <span class="text-gray-400">6</span>
+                    </div>
+                    <div class="h-10 flex items-center justify-center">
+                        <span class="text-gray-400">7</span>
+                    </div>
+                    <div class="h-10 flex items-center justify-center">
+                        <span class="text-gray-400">8</span>
+                    </div>
+                    <div class="h-10 flex items-center justify-center">
+                        <span class="text-gray-400">9</span>
+                    </div>
+                    <div class="h-10 flex items-center justify-center rounded-full bg-primary-100 dark:bg-primary-900">
+                        <span class="text-primary-600 dark:text-primary-400">10</span>
+                    </div>
+                    <div class="h-10 flex items-center justify-center rounded-full bg-primary-100 dark:bg-primary-900">
+                        <span class="text-primary-600 dark:text-primary-400">11</span>
+                    </div>
+                    <!-- Неделя 3 -->
+                    <div class="h-10 flex items-center justify-center rounded-full bg-primary-100 dark:bg-primary-900">
+                        <span class="text-primary-600 dark:text-primary-400">12</span>
+                    </div>
+                    <div class="h-10 flex items-center justify-center">
+                        <span class="text-gray-400">13</span>
+                    </div>
+                    <div class="h-10 flex items-center justify-center">
+                        <span class="text-gray-400">14</span>
+                    </div>
+                    <div class="h-10 flex items-center justify-center">
+                        <span class="text-gray-400">15</span>
+                    </div>
+                    <div class="h-10 flex items-center justify-center">
+                        <span class="text-gray-400">16</span>
+                    </div>
+                    <div class="h-10 flex items-center justify-center">
+                        <span class="text-gray-400">17</span>
+                    </div>
+                    <div class="h-10 flex items-center justify-center">
+                        <span class="text-gray-400">18</span>
+                    </div>
+                    <!-- Неделя 4 -->
+                    <div class="h-10 flex items-center justify-center">
+                        <span class="text-gray-400">19</span>
+                    </div>
+                    <div class="h-10 flex items-center justify-center">
+                        <span class="text-gray-400">20</span>
+                    </div>
+                    <div class="h-10 flex items-center justify-center">
+                        <span class="text-gray-400">21</span>
+                    </div>
+                    <div class="h-10 flex items-center justify-center">
+                        <span class="text-gray-400">22</span>
+                    </div>
+                    <div class="h-10 flex items-center justify-center">
+                        <span class="text-gray-400">23</span>
+                    </div>
+                    <div class="h-10 flex items-center justify-center">
+                        <span class="text-gray-400">24</span>
+                    </div>
+                    <div class="h-10 flex items-center justify-center">
+                        <span class="text-gray-400">25</span>
+                    </div>
+                    <!-- Неделя 5 -->
+                    <div class="h-10 flex items-center justify-center">
+                        <span class="text-gray-400">26</span>
+                    </div>
+                    <div class="h-10 flex items-center justify-center">
+                        <span class="text-gray-400">27</span>
+                    </div>
+                    <div class="h-10 flex items-center justify-center">
+                        <span class="text-gray-400">28</span>
+                    </div>
+                    <div class="h-10 flex items-center justify-center">
+                        <span class="text-gray-400">29</span>
+                    </div>
+                    <div class="h-10 flex items-center justify-center">
+                        <span class="text-gray-400">30</span>
+                    </div>
+                    <div class="h-10"></div>
+                    <div class="h-10"></div>
+                </div>
+            </div>
+
+            <!-- Сессии -->
+            <div>
+                <h3 class="font-medium mb-3">Сессии за 10-12 июня</h3>
+                
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm mb-3">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="font-medium">Осознанное дыхание</span>
+                        <span class="text-sm text-gray-500 dark:text-gray-400">10 июня</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-primary-600 dark:text-primary-400">5 мин</span>
+                        <span class="text-gray-500 dark:text-gray-400">+10 XP</span>
+                    </div>
+                </div>
+                
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm mb-3">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="font-medium">Сканирование тела</span>
+                        <span class="text-sm text-gray-500 dark:text-gray-400">11 июня</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-primary-600 dark:text-primary-400">10 мин</span>
+                        <span class="text-gray-500 dark:text-gray-400">+20 XP</span>
+                    </div>
+                </div>
+                
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="font-medium">Осознанное дыхание</span>
+                        <span class="text-sm text-gray-500 dark:text-gray-400">12 июня</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-primary-600 dark:text-primary-400">5 мин</span>
+                        <span class="text-gray-500 dark:text-gray-400">+10 XP</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Данные медитаций
+        const meditations = {
+            'breathing': {
+                title: 'Осознанное дыхание',
+                duration: 5,
+                description: 'Сосредоточьтесь на естественном ритме дыхания. Вдыхайте и выдыхайте, наблюдая за ощущениями в теле.',
+                icon: 'wind',
+                color: 'primary'
+            },
+            'body-scan': {
+                title: 'Сканирование тела',
+                duration: 10,
+                description: 'Медленно перемещайте внимание по разным частям тела, замечая любые ощущения без оценки.',
+                icon: 'spa',
+                color: 'secondary'
+            },
+            'gratitude': {
+                title: 'Медитация благодарности',
+                duration: 7,
+                description: 'Направьте внимание на людей, вещи или события, за которые вы испытываете благодарность.',
+                icon: 'heart',
+                color: 'yellow'
+            },
+            'sleep': {
+                title: 'Успокоение перед сном',
+                duration: 15,
+                description: 'Расслабьте тело и ум, постепенно отпуская все мысли и готовясь к спокойному сну.',
+                icon: 'moon',
+                color: 'indigo'
+            }
+        };
+
+        // Состояние приложения
+        const state = {
+            currentScreen: 'main',
+            currentMeditation: null,
+            isMeditating: false,
+            timeLeft: 0,
+            timerInterval: null,
+            language: 'ru',
+            theme: localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'),
+            username: 'Алексей',
+            level: 3,
+            xp: 120,
+            maxXp: 200,
+            sessions: 12,
+            streak: 3,
+            medals: 2
+        };
+
+        // Инициализация приложения
+        function initApp() {
+            // Установка темы
+            document.documentElement.classList.toggle('dark', state.theme === 'dark');
+            document.getElementById('theme-toggle').checked = state.theme === 'dark';
+            
+            // Обработчики событий
+            document.getElementById('profile-btn').addEventListener('click', () => showScreen('profile'));
+            document.getElementById('back-btn').addEventListener('click', () => showScreen('main'));
+            document.getElementById('meditation-back-btn').addEventListener('click', () => {
+                if (state.isMeditating) {
+                    if (confirm('Прервать медитацию?')) {
+                        stopMeditation();
+                        showScreen('main');
+                    }
+                } else {
+                    showScreen('main');
+                }
+            });
+            document.getElementById('history-back-btn').addEventListener('click', () => showScreen('main'));
+            
+            // Обработчики карточек медитации
+            document.querySelectorAll('.meditation-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    const meditationType = card.getAttribute('data-meditation');
+                    startMeditation(meditationType);
+                });
+            });
+            
+            // Обработчик кнопки начала медитации
+            document.getElementById('start-btn').addEventListener('click', toggleMeditation);
+            
+            // Обработчик переключения темы
+            document.getElementById('theme-toggle').addEventListener('change', toggleTheme);
+            
+            // Обработчики переключения языка
+            document.getElementById('lang-ru').addEventListener('click', () => setLanguage('ru'));
+            document.getElementById('lang-en').addEventListener('click', () => setLanguage('en'));
+            
+            // Инициализация прогресс-круга
+            const circle = document.getElementById('progress-circle');
+            const radius = circle.r.baseVal.value;
+            const circumference = 2 * Math.PI * radius;
+            circle.style.strokeDasharray = `${circumference}`;
+            circle.style.strokeDashoffset = `${circumference}`;
+            
+            // Показать главный экран
+            showScreen('main');
+            
+            // Инициализация данных из Telegram (если доступно)
+            if (window.Telegram && window.Telegram.WebApp) {
+                const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
+                if (tgUser) {
+                    state.username = tgUser.first_name || 'Пользователь';
+                    document.getElementById('username').textContent = state.username;
+                    document.getElementById('profile-username').textContent = state.username;
+                }
+            }
+        }
+
+        // Показать определенный экран
+        function showScreen(screen) {
+            state.currentScreen = screen;
+            
+            // Скрыть все экраны
+            document.getElementById('main-screen').classList.add('hidden');
+            document.getElementById('profile-screen').classList.add('hidden');
+            document.getElementById('meditation-screen').classList.add('hidden');
+            document.getElementById('history-screen').classList.add('hidden');
+            
+            // Показать нужный экран
+            document.getElementById(`${screen}-screen`).classList.remove('hidden');
+        }
+
+        // Начать медитацию
+        function startMeditation(type) {
+            state.currentMeditation = meditations[type];
+            
+            // Установка данных на экране медитации
+            document.getElementById('meditation-title').textContent = 'Медитация';
+            document.getElementById('practice-title').textContent = state.currentMeditation.title;
+            document.getElementById('practice-duration').textContent = `${state.currentMeditation.duration} мин`;
+            document.getElementById('practice-description').textContent = state.currentMeditation.description;
+            
+            // Установка иконки и цвета
+            const iconElement = document.getElementById('meditation-icon');
+            iconElement.className = `fas fa-${state.currentMeditation.icon} text-${state.currentMeditation.color}-600 dark:text-${state.currentMeditation.color}-400 text-5xl`;
+            
+            // Сброс таймера
+            state.timeLeft = state.currentMeditation.duration * 60;
+            updateTimerDisplay();
+            
+            // Сброс прогресса
+            const circle = document.getElementById('progress-circle');
+            const radius = circle.r.baseVal.value;
+            const circumference = 2 * Math.PI * radius;
+            circle.style.strokeDashoffset = `${circumference}`;
+            
+            // Показать экран медитации
+            showScreen('meditation');
+        }
+
+        // Переключить медитацию (старт/пауза)
+        function toggleMeditation() {
+            if (state.isMeditating) {
+                pauseMeditation();
+            } else {
+                playMeditation();
+            }
+        }
+
+        // Начать медитацию
+        function playMeditation() {
+            state.isMeditating = true;
+            document.getElementById('start-btn').textContent = 'Пауза';
+            document.getElementById('timer-state').textContent = 'Медитация';
+            
+            // Запуск таймера
+            state.timerInterval = setInterval(() => {
+                state.timeLeft--;
+                updateTimerDisplay();
+                
+                // Обновление прогресса
+                const progress = 1 - (state.timeLeft / (state.currentMeditation.duration * 60));
+                const circle = document.getElementById('progress-circle');
+                const radius = circle.r.baseVal.value;
+                const circumference = 2 * Math.PI * radius;
+                const offset = circumference - progress * circumference;
+                circle.style.strokeDashoffset = offset;
+                
+                // Завершение медитации
+                if (state.timeLeft <= 0) {
+                    completeMeditation();
+                }
+            }, 1000);
+            
+            // Здесь можно добавить воспроизведение аудио
+        }
+
+        // Приостановить медитацию
+        function pauseMeditation() {
+            state.isMeditating = false;
+            document.getElementById('start-btn').textContent = 'Продолжить';
+            document.getElementById('timer-state').textContent = 'Пауза';
+            
+            // Остановка таймера
+            clearInterval(state.timerInterval);
+            
+            // Здесь можно добавить паузу аудио
+        }
+
+        // Остановить медитацию
+        function stopMeditation() {
+            state.isMeditating = false;
+            document.getElementById('start-btn').textContent = 'Начать';
+            document.getElementById('timer-state').textContent = 'Готово';
+            
+            // Остановка таймера
+            clearInterval(state.timerInterval);
+            
+            // Здесь можно добавить остановку аудио
+        }
+
+        // Завершить медитацию
+        function completeMeditation() {
+            stopMeditation();
+            
+            // Начисление XP
+            const xpGained = state.currentMeditation.duration * 2; // 2 XP за минуту
+            state.xp += xpGained;
+            
+            // Проверка уровня
+            if (state.xp >= state.maxXp) {
+                state.level++;
+                state.xp = state.xp - state.maxXp;
+                state.maxXp = Math.floor(state.maxXp * 1.2); // Увеличиваем XP для следующего уровня
+                
+                // Показать уведомление о новом уровне
+                alert(`Поздравляем! Вы достигли уровня ${state.level}!`);
+            }
+            
+            // Увеличение счетчиков
+            state.sessions++;
+            state.streak++;
+            
+            // Показать результат
+            alert(`Медитация завершена! Вы получили ${xpGained} XP.`);
+            
+            // Вернуться на главный экран
+            showScreen('main');
+        }
+
+        // Обновить отображение таймера
+        function updateTimerDisplay() {
+            const minutes = Math.floor(state.timeLeft / 60);
+            const seconds = state.timeLeft % 60;
+            document.getElementById('timer').textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+        }
+
+        // Переключить тему
+        function toggleTheme() {
+            state.theme = state.theme === 'dark' ? 'light' : 'dark';
+            document.documentElement.classList.toggle('dark', state.theme === 'dark');
+            localStorage.setItem('theme', state.theme);
+        }
+
+        // Установить язык
+        function setLanguage(lang) {
+            state.language = lang;
+            
+            // Обновить кнопки языка
+            document.getElementById('lang-ru').classList.toggle('bg-primary-600', lang === 'ru');
+            document.getElementById('lang-ru').classList.toggle('text-white', lang === 'ru');
+            document.getElementById('lang-ru').classList.toggle('bg-gray-200', lang !== 'ru');
+            document.getElementById('lang-ru').classList.toggle('dark:bg-gray-700', lang !== 'ru');
+            
+            document.getElementById('lang-en').classList.toggle('bg-primary-600', lang === 'en');
+            document.getElementById('lang-en').classList.toggle('text-white', lang === 'en');
+            document.getElementById('lang-en').classList.toggle('bg-gray-200', lang !== 'en');
+            document.getElementById('lang-en').classList.toggle('dark:bg-gray-700', lang !== 'en');
+            
+            // Здесь можно добавить логику перевода интерфейса
+        }
+
+        // Запуск приложения после загрузки DOM
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
